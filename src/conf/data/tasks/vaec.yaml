@@ -1,0 +1,32 @@
+defaults:
+  - vaec_vit/dataloader: ../../../../dataloader/default
+  - vaec_vit/optimizer: ../../../../optimizer/adam
+
+vaec_vit:
+  num_context_panels: 3
+  context_groups: [[1]]
+  answer_groups: [0,1,2,3,4,5,6]
+  dataset:
+    target: model.avr_datasets.EmbeddingH5PYDataset
+    data_path: ${data.root}/vit_large_patch32_384/vaec/
+    train:
+      _target_: ${data.tasks.vaec_vit.dataset.target}
+      dataset_type: analogy_train.hy
+      # - analogy_scale_train.hy
+      data_path: ${data.tasks.vaec_vit.dataset.data_path}
+    val:
+      _target_: ${data.tasks.vaec_vit.dataset.target}
+      dataset_type: analogy_test1.hy
+        # - analogy_scale_test1.hy
+      data_path: ${data.tasks.vaec_vit.dataset.data_path}
+    test:
+      _target_: ${data.tasks.vaec_vit.dataset.target}
+      dataset_type: analogy_test1.hy
+        # - analogy_test1.hy
+        # - analogy_test2.hy
+        # - analogy_test3.hy
+        # - analogy_test4.hy
+        # - analogy_test5.hy
+        # - analogy_scale_test1.hy
+      data_path: ${data.tasks.vaec_vit.dataset.data_path}
+  target_loss_ratio: ${target_loss_ratio}

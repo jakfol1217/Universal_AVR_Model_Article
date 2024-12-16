@@ -1,0 +1,46 @@
+_target_: model.models.combined_model_v2.CombinedModel
+context_norm: true
+
+in_dim: 1024
+
+relational_module_real:
+  _target_: model.models.relational_module.RelationalModuleSymAsym
+  object_size: 1024
+  rel_activation_func: 'none'
+  aggregate: true
+  context_norm: true
+  hierarchical: false
+  ckpt_path: null
+  freeze_module: false
+  loading_name: 'relational_module_real'
+
+
+relational_module_abstract:
+  _target_: model.models.relational_module.RelationalModuleSymAsym
+  object_size: 1024
+  rel_activation_func: 'none'
+  aggregate: true
+  context_norm: true
+  hierarchical: false
+  ckpt_path: null
+  freeze_module: false
+  loading_name: 'relational_module_abstract'
+
+relational_scoring_module:
+  _target_: model.models.relational_module.RelationalScoringModule
+  in_dim: 80
+  hidden_dim: [128]
+  pooling: 'max'
+  transformer: null
+  ckpt_path: null
+  freeze_module: false
+  layers_to_train: [1]
+
+real_idxes: [0]
+
+save_hyperparameters: true
+
+limit_to_groups: false
+
+slot_model: null
+

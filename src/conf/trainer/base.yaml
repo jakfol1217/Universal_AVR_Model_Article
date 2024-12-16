@@ -1,0 +1,23 @@
+_target_: pytorch_lightning.Trainer
+max_epochs: ${max_epochs}
+log_every_n_steps: ${log_every_n_steps}
+# accelerator: gpu
+# devices: 1
+# num_sanity_val_steps: 0
+precision: 16-mixed
+callbacks:
+  - _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: ${monitor}
+    patience: ${early_stopping_patience}
+    strict: false
+    check_finite: False
+    verbose: True
+  - _target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
+    refresh_rate: 1
+  - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    monitor: ${monitor}
+    mode: min
+    save_last: true
+    dirpath: /app/model_checkpoints/${get_slurm_job_id:}
+    every_n_epochs: ${every_n_epochs}
+    every_n_train_steps: ${every_n_train_steps}

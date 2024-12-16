@@ -1,0 +1,10 @@
+_target_: model.models.ViT.ViT
+dim: 64 # hidden dimension size
+depth: 24 # transformer number of layers
+heads: 8 # transformer number of heads
+mlp_dim: 512 # transformer mlp dimension
+pool: cls
+dim_head: 32
+dropout: 0.1
+emb_dropout: 0.0
+save_hyperparameters: False

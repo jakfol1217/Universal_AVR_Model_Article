@@ -1,0 +1,12 @@
+defaults:
+  - submitit_local
+
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.LocalLauncher
+submitit_folder: ${hydra.sweep.dir}/.submitit-local/%j
+# name: ${hydra.job.name} # name of the job
+timeout_min: 1 # maximum time for the job in minutes
+cpus_per_task: 1 # number of cpus to use for each task
+gpus_per_node: 0 # number of gpus to use on each node
+tasks_per_node: 3 # number of tasks to spawn on each node
+mem_gb: 4 # memory to reserve for the job on each node (in GB)
+nodes: 1 # number of nodes to use for the job

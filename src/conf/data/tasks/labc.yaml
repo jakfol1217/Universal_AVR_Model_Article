@@ -1,0 +1,24 @@
+defaults:
+  - labc_vit_2/dataloader: ../../../../dataloader/default
+  - labc_vit_2/optimizer: ../../../../optimizer/adam
+
+labc_vit_2:
+  num_context_panels: 5
+  context_groups: [[0,1,2]]
+  answer_groups: [0, 1, 2, 3]
+  dataset:
+    target: model.avr_datasets.EmbeddingH5PYDataset
+    data_path: ${data.root}/vit_large_patch32_384/vap/
+    train:
+      _target_: ${data.tasks.labc_vit_2.dataset.target}
+      dataset_type: train
+      data_path: ${data.tasks.labc_vit_2.dataset.data_path}
+    val:
+      _target_: ${data.tasks.labc_vit_2.dataset.target}
+      dataset_type: val
+      data_path: ${data.tasks.labc_vit_2.dataset.data_path}
+    test:
+      _target_: ${data.tasks.labc_vit_2.dataset.target}
+      dataset_type: test
+      data_path: ${data.tasks.labc_vit_2.dataset.data_path}
+  target_loss_ratio: ${target_loss_ratio}

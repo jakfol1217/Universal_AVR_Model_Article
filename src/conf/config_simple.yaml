@@ -1,0 +1,27 @@
+defaults:
+  - data/tasks: []
+  # - dataloader: default
+  # - optimizer: adam
+  - data/datamodule: single_module
+  # - model: stsn
+  - trainer: simple
+  - metrics: [mse, cross_entropy]
+  - _self_
+data:
+  root: /app/data
+torch:
+  matmul_precision: medium # medium high
+checkpoint_path: null # required in test.py
+seed: 42
+transformer_name: vit_large_patch32_384
+# batch_size: 4
+# img_size: 32
+# num_workers: 8
+# lr: 0.001
+# max_epochs: null
+# monitor: null
+# early_stopping_patience: null
+# log_every_n_steps: null
+# target_loss_ratio: 0.3
+# every_n_epochs: null
+# every_n_train_steps: null

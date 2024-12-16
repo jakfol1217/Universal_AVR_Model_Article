@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - override /data/tasks: [bongard_hoi, bongard_logo, dopt] # select tasks for given experiments
+  - override /hydra/launcher: local # slurm
+    # More common schemas can be saved in hydra/launcher/<name>.yaml to avoid repetition (in config below)
+
+hydra:
+  launcher:
+    timeout_min: 4320 # Override slurm configuration on experiment level
+max_epochs: 2

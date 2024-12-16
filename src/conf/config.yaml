@@ -1,0 +1,28 @@
+defaults:
+  - data/tasks: [bongard_hoi] # bongard_hoi vaec vap
+  - dataloader: default
+  - data/datamodule: single_module # single_module # combined_module_min_size # combined_module_sequential
+  - optimizer: adam
+  - model: stsn
+  - trainer: base
+  - metrics: [mse, cross_entropy]
+  - _self_
+data:
+  root: /app/data
+torch:
+  matmul_precision: medium # medium high
+batch_size: 4
+img_size: 32
+num_workers: 8
+lr: 0.001
+max_epochs: 1
+checkpoint_path: null
+monitor: val/loss
+transformer_name: vit_large_patch32_384
+early_stopping_patience: 3
+log_every_n_steps: 50
+seed: 42
+target_loss_ratio: 0.3
+slots_save_path: /app/out/slots
+every_n_epochs: 1  # to be changed
+every_n_train_steps: null

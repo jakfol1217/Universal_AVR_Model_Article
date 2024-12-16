@@ -1,0 +1,24 @@
+defaults:
+  - vasr_vit/dataloader: ../../../../dataloader/default
+  - vasr_vit/optimizer: ../../../../optimizer/adam
+  
+vasr_vit:
+  num_context_panels: 3
+  context_groups: [[1]]
+  answer_groups: [0,1,2,3]
+  dataset:
+    target: model.avr_datasets.EmbeddingH5PYDataset
+    data_path: ${data.root}/vit_large_patch32_384/vasr/
+    train:
+      _target_: ${data.tasks.vasr_vit.dataset.target}
+      dataset_type: train
+      data_path: ${data.tasks.vasr_vit.dataset.data_path}
+    val:
+      _target_: ${data.tasks.vasr_vit.dataset.target}
+      dataset_type: dev
+      data_path: ${data.tasks.vasr_vit.dataset.data_path}
+    test:
+      _target_: ${data.tasks.vasr_vit.dataset.target}
+      dataset_type: dev
+      data_path: ${data.tasks.vasr_vit.dataset.data_path}
+  target_loss_ratio: ${target_loss_ratio}

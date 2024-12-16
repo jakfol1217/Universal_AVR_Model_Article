@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - override /data/tasks: [vaec_vit_2, bongard_logo_vit_2]
+  - override /model: combined_model_v2
+  - override /data/datamodule: multi_module
+
+img_size: 256
+max_epochs: 500
+batch_size: 16
+lr: 0.0001
+every_n_epochs: 1
+every_n_train_steps: null
+early_stopping_patience: 20
+
+model:
+  real_idxes: [0]
+  task_metric_0:
+    accuracy_vaec:
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: 4
+      average: macro
+  task_metric_1:
+    accuracy_bongard_logo:
+      _target_: torchmetrics.classification.BinaryAccuracy
+      threshold: 0.5

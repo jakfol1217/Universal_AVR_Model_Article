@@ -1,0 +1,4 @@
+accuracy:
+  _target_: torchmetrics.classification.MulticlassAccuracy
+  num_classes: 2 # TODO: how to distinguish different tasks?
+# metric defined on task level

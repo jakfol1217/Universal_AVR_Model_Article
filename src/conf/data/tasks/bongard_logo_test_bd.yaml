@@ -1,0 +1,19 @@
+defaults:
+  - bongard_logo_test_bd_vit_2/dataloader: ../../../../dataloader/default
+  - bongard_logo_test_bd_vit_2/optimizer: ../../../../optimizer/adam
+
+bongard_logo_test_bd_vit_2:
+  num_context_panels: 12
+  context_groups: [[0,1,2,3,4,5]]
+  answer_groups: [0, 1]
+  dataset:
+    target: model.avr_datasets.EmbeddingH5PYDataset
+    data_path: ${data.root}/vit_large_patch32_384/bongard_logo/
+    test:
+      _target_: ${data.tasks.bongard_logo_test_bd_vit_2.dataset.target}
+      dataset_type: test_bd
+        # - test_hd_comb
+        # - test_bd
+        # - test_hd_novel
+      data_path: ${data.tasks.bongard_logo_test_bd_vit_2.dataset.data_path}
+  target_loss_ratio: ${target_loss_ratio}

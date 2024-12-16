@@ -1,0 +1,23 @@
+# @package _global_
+defaults:
+  - override /data/tasks: [iraven_vit_2]
+  - override /model: combined_model_v2
+  - override /data/datamodule: single_module
+
+img_size: 256
+max_epochs: 500
+batch_size: 16
+lr: 0.0001
+every_n_epochs: 1
+every_n_train_steps: null
+early_stopping_patience: 20
+
+model:
+  real_idxes: []
+  relational_scoring_module:
+    in_dim: 81
+  task_metric_0:
+    accuracy_iraven:
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: 8
+      average: macro
