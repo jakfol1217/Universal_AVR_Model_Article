@@ -15,7 +15,7 @@ test_prepare () {
 test_run () {
     echo "Slurm ids:"
     for task_nm in ${@}; do
-        LAST_ID=$(sbatch --parsable --time=0-00:30:00 --dependency=afterany:${LAST_ID} scripts/run.sh src/test.py "checkpoint_path='${CHECKPOINT_PATH}'" data/tasks=[${task_nm}] ${ADDITIONAL_PARAMS})
+        LAST_ID=$(sbatch --parsable --time=0-00:30:00 --dependency=afterany:${LAST_ID} scripts/run_yolo.sh src/test.py "checkpoint_path='${CHECKPOINT_PATH}'" data/tasks=[${task_nm}] ${ADDITIONAL_PARAMS})
         echo -n "${LAST_ID} "
     done
     echo
@@ -40,16 +40,86 @@ test_bongard_hoi () {
 }
 
 
+
 test_vasr () {
     test_prepare $1 $2 $3
     
     test_run vasr_vit_2
 }
 
+
 test_iraven () {
     test_prepare $1 $2 $3
     
     test_run iraven_vit_2
+}
+
+
+test_clevr () {
+    test_prepare $1 $2 $3
+
+    test_run clevr_vit_2
+}
+
+test_clevr_problem1 () {
+    test_prepare $1 $2 $3
+
+    test_run clevr_problem1_vit_2
+}
+
+test_clevr_problem2 () {
+    test_prepare $1 $2 $3
+
+    test_run clevr_problem2_vit_2
+}
+
+test_clevr_problem3 () {
+    test_prepare $1 $2 $3
+
+    test_run clevr_problem3_vit_2
+}
+
+
+test_iraven_center_single () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_center_single_vit_2
+}
+
+test_iraven_in_center_single_out_center_single () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_in_center_single_out_center_single_vit_2
+}
+
+test_iraven_up_center_single_down_center_single () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_up_center_single_down_center_single_vit_2
+}
+
+test_iraven_distribute_four () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_distribute_four_vit_2
+}
+
+test_iraven_in_distribute_four_out_center_single () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_in_distribute_four_out_center_single_vit_2
+}
+
+test_iraven_distribute_nine () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_distribute_nine_vit_2
+}
+
+test_iraven_left_center_single_right_center_single () {
+    test_prepare $1 $2 $3
+    
+    test_run iraven_left_center_single_right_center_single_vit_2
 }
 
 
@@ -72,4 +142,6 @@ test_labc () {
     
     test_run labc_vit_2
 }
+
+
 
