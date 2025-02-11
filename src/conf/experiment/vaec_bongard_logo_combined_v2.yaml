@@ -13,7 +13,7 @@ every_n_train_steps: null
 early_stopping_patience: 20
 
 model:
-  real_idxes: [0]
+  real_idxes: []
   task_metric_0:
     accuracy_vaec:
       _target_: torchmetrics.classification.MulticlassAccuracy

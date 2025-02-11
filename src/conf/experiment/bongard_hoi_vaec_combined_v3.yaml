@@ -25,6 +25,6 @@ model:
   task_metric_1:
     accuracy_vaec:
       _target_: torchmetrics.classification.MulticlassAccuracy
-      num_classes: 7
+      num_classes: 4
       average: macro
 

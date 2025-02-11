@@ -251,6 +251,45 @@ class VASRSamplesDataset(Dataset):
         return img, target
 
 
+
+class CLEVR_VITdataset(Dataset):
+    def __init__(
+            self,
+            data_path: str,
+            regimes: list[str],
+            dataset_type: str,
+            model_name: str,
+        ):
+            self.data_files = []
+            for regime in regimes:
+                files = [f for f in glob.glob(os.path.join(data_path, regime, "*.npz")) if dataset_type in f]
+                self.data_files += files
+
+
+            model = timm.create_model(model_name)
+            model_conf = timm.data.resolve_data_config({}, model=model)
+            self.transforms = create_transform(**model_conf)
+
+
+    def __len__(self):
+        return len(self.data_files)
+
+    def __getitem__(self, item):
+        data = np.load(self.data_files[item], mmap_mode='r')
+        images = data['image']
+        target = np.asarray(data['target'])
+
+        img = torch.stack([self.transforms(Image.fromarray(im).convert("RGB")) for im in images])
+
+        return img, target
+
+
+
+
+
+
+
+
 class HOISamplesDataset(Dataset):
     def __init__(
             self,
@@ -482,6 +521,7 @@ class HOIdatasetWithOriginals(HOI_VITdataset):
 
         return img, target, caps
 
+
 class LOGOdataset(Dataset):
     def __init__(
         self,
@@ -565,22 +605,9 @@ class LOGOdataset_vit(LOGOdataset):
 
 
 class DEEPIQdataset(Dataset):
-    def __init__(self, 
-                data_path: str,
-                dataset_type: str,
-                img_size: int | None
-                ):
+    def __init__(self, data_path, img_size=None):
         self.data    = glob.glob(os.path.join(data_path, "*.png"))
         self.answers = pd.read_csv(glob.glob(os.path.join(data_path, "*.csv"))[0], header=None)
-
-        split = int(0.8*len(self.data))
-        if dataset_type == "train":
-            self.data = self.data[:split]
-            self.answers[0][:split]
-        if dataset_type == "dev":
-            self.data = self.data[split:]
-            self.answers[0][split:]
-
         if img_size:
             self.transforms = transforms.Compose(
                     [
@@ -616,7 +643,6 @@ class DEEPIQdataset(Dataset):
         for window in range(0, image.size[0], 100):
             images.append(Image.fromarray(np.array(image)[:,window:window+100]).convert('RGB'))
         return images
-    
 
 class DEEPIQdataset_vit(DEEPIQdataset):
     def __init__(self, 
@@ -717,7 +743,7 @@ class DSPRITESdataset(Dataset):
         target = np.asarray(self.targets[item])
 
         return img, target
-    
+
 
 class DSPRITESdataset_vit(DSPRITESdataset):
     def __init__(self, 
@@ -753,7 +779,7 @@ class IRAVENdataset(Dataset):
     ):
         self.data_files = []
         for regime in regimes:
-            files = [f for f in glob.glob(os.path.join(data_path, regime, "*.npz")) if dataset_type in f]
+            files = [f for f in glob.glob(os.path.join(data_path, regime, "*.npz")) if dataset_type in f and "_rule" not in f]
             self.data_files += files
         if img_size:
             self.transforms = transforms.Compose(
@@ -774,6 +800,7 @@ class IRAVENdataset(Dataset):
 
     def __getitem__(self, item):
         data = np.load(self.data_files[item], mmap_mode='r')
+
         images = data['image']
 
         target = np.asarray(data['target'])
@@ -781,7 +808,7 @@ class IRAVENdataset(Dataset):
         img = torch.stack([self.transforms(Image.fromarray(im).convert('RGB')) for im in images])
 
         return img, target
-    
+
 
 class IRAVENdataset_vit(IRAVENdataset):
     def __init__(
@@ -793,12 +820,14 @@ class IRAVENdataset_vit(IRAVENdataset):
     ):
         self.data_files = []
         for regime in regimes:
-            files = [f for f in glob.glob(os.path.join(data_path, regime, "*.npz")) if dataset_type in f]
+            files = [f for f in glob.glob(os.path.join(data_path, regime, "*.npz")) if dataset_type in f and "_rule" not in f]
             self.data_files += files
       
         model = timm.create_model(model_name)
         model_conf = timm.data.resolve_data_config({}, model=model)
         self.transforms = create_transform(**model_conf)
+
+
 
 class MNSdataset(Dataset):
     def __init__(
@@ -876,7 +905,8 @@ class PGMdataset(Dataset):
         img = torch.stack([self.transforms(im) for im in images])
 
         return img, target
-    
+
+
 
 class LABCdataset(Dataset):
     def __init__(
@@ -915,9 +945,11 @@ class LABCdataset(Dataset):
         images = images.reshape(-1,160,160)
         target = np.asarray(data['target'])
 
-        img = torch.stack([self.transforms(Image.fromarray(im.astype('uint')).convert("RGB")) for im in images])
+        img = torch.stack([self.transforms(Image.fromarray(im.astype('uint8')).convert("RGB")) for im in images])
 
         return img, target
+
+
     
 
 class LABC_VITdataset(LABCdataset):
@@ -937,6 +969,7 @@ class LABC_VITdataset(LABCdataset):
         model = timm.create_model(model_name)
         model_conf = timm.data.resolve_data_config({}, model=model)
         self.transforms = create_transform(**model_conf)
+
 
 
 

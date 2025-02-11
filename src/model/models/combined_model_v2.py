@@ -63,11 +63,13 @@ class CombinedModel(ScoringModel):
             self.pooling = nn.AdaptiveMaxPool2d((1, relational_module_abstract.object_size))
             self.relational_module_abstract = relational_module_abstract
 
-        new_real_idxes = kwargs.get("new_real_idxes")
 
+        new_real_idxes = kwargs.get("new_real_idxes")
+        self.dataloader_idx = kwargs.get("dataloader_idx")
         self.real_idxes = real_idxes # indexes of datasets with real-life images for training
         if new_real_idxes is not None:
             self.real_idxes = new_real_idxes
+
 
         self.limit_to_groups = limit_to_groups # whether to limit relational computations to groups (e.g. computing realtions for only 1st group in bongard problems)
 
@@ -76,8 +78,6 @@ class CombinedModel(ScoringModel):
             for _it in kwargs.keys()
             if _it.startswith("task_metric_")
         ]
-
-        self.dataloader_idx = kwargs.get("dataloader_idx")
 
         def create_module_dict(metrics_dict):
             return nn.ModuleDict(
@@ -172,6 +172,7 @@ class CombinedModel(ScoringModel):
     def partial_freeze_module(self, module, layers):
         for param in module.parameters():
             param.requires_grad = False
+        print(module.named_parameters())
         for layer in layers:
             for name, param in module.named_parameters():
                 layer_name = f"transformer.layers.{layer}"
@@ -202,7 +203,6 @@ class CombinedModel(ScoringModel):
    #         given_panels_rel = self.pooling(given_panels_rel).squeeze(-2)
    #         answer_panels_rel = self.pooling(answer_panels_rel).squeeze(-2)
             rel_matrix = self.relational_module_abstract(given_panels, answer_panels)
-
         scores = self.relational_scoring_module(rel_matrix)
         return scores
 
@@ -238,6 +238,7 @@ class CombinedModel(ScoringModel):
         pred = scores.argmax(1)
 
         ce_loss = self.loss(scores, target)  # cross entropy loss for slot image reconstruction
+
         if self.dataloader_idx is not None:
             current_metrics = self.additional_metrics[self.dataloader_idx]
         else:

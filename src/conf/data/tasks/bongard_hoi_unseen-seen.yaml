@@ -1,19 +1,41 @@
 defaults:
-  - bongard_hoi_unseen-seen_vit_2/dataloader: ../../../../dataloader/default
-  - bongard_hoi_unseen-seen_vit_2/optimizer: ../../../../optimizer/adam
+  - bongard_hoi_unseen-seen/dataloader: ../../../../dataloader/default
+  - bongard_hoi_unseen-seen/optimizer: ../../../../optimizer/adam
 
-bongard_hoi_unseen-seen_vit_2:
+bongard_hoi_unseen-seen:
   num_context_panels: 12
   context_groups: [[0,1,2,3,4,5]]
   answer_groups: [0, 1]
   dataset:
-    target: model.avr_datasets.EmbeddingH5PYDataset
-    data_path: ${data.root}/vit_large_patch32_384/bongard_hoi/
+    target: model.avr_datasets.HOIdataset
+    data_path: ${data.root}/bongard_hoi/hake/
+    annotation_path: ${data.root}/bongard_hoi/bongard_hoi_release/
+    img_size: ${img_size}
+    train:
+      _target_: ${data.tasks.bongard_hoi_unseen-seen.dataset.target}
+      dataset_type: bongard_hoi_train.json
+      data_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.data_path}
+      annotation_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.annotation_path}
+      img_size: ${data.tasks.bongard_hoi_unseen-seen.dataset.img_size}
+    val:
+      _target_: ${data.tasks.bongard_hoi_unseen-seen.dataset.target}
+      dataset_type: bongard_hoi_val_unseen_obj_unseen_act.json.json
+        # TODO: allow multiple dataset types (requires change in dataset class)?
+        # - bongard_hoi_val_seen_obj_unseen_act.json
+        # - bongard_hoi_val_unseen_obj_unseen_act.json
+        # - bongard_hoi_val_seen_obj_seen_act.json
+        # - bongard_hoi_val_unseen_obj_seen_act.json
+      data_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.data_path}
+      annotation_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.annotation_path}
+      img_size: ${data.tasks.bongard_hoi_unseen-seen.dataset.img_size}
     test:
-      _target_: ${data.tasks.bongard_hoi_unseen-seen_vit_2.dataset.target}
-      dataset_type: bongard_hoi_test_unseen_obj_seen_act
-        # - bongard_hoi_test_unseen_obj_seen_act
-        # - bongard_hoi_test_seen_obj_unseen_act
-        # - bongard_hoi_test_unseen_obj_unseen_act
-      data_path: ${data.tasks.bongard_hoi_unseen-seen_vit_2.dataset.data_path}
+      _target_: ${data.tasks.bongard_hoi_unseen-seen.dataset.target}
+      dataset_type: bongard_hoi_test_unseen_obj_seen_act.json
+        # - bongard_hoi_test_seen_obj_seen_act.json
+        # - bongard_hoi_test_unseen_obj_seen_act.json
+        # - bongard_hoi_test_seen_obj_unseen_act.json
+        # - bongard_hoi_test_unseen_obj_unseen_act.json
+      data_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.data_path}
+      annotation_path: ${data.tasks.bongard_hoi_unseen-seen.dataset.annotation_path}
+      img_size: ${data.tasks.bongard_hoi_unseen-seen.dataset.img_size}
   target_loss_ratio: ${target_loss_ratio}

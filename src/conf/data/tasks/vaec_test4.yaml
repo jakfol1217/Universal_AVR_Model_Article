@@ -1,22 +1,39 @@
 defaults:
-  - vaec_test4_vit_2/dataloader: ../../../../dataloader/default
-  - vaec_test4_vit_2/optimizer: ../../../../optimizer/adam
+  - vaec_test4/dataloader: ../../../../dataloader/default
+  - vaec_test4/optimizer: ../../../../optimizer/adam
 
-vaec_test4_vit_2:
+vaec_test4:
   num_context_panels: 3
-  context_groups: [[1]]
-  answer_groups: [0,1,2,3,4,5,6]
   dataset:
-    target: model.avr_datasets.EmbeddingH5PYDataset
-    data_path: ${data.root}/vit_large_patch32_384/vaec/
+    target: model.avr_datasets.VAECdataset
+    data_path: ${data.root}/vaec/datasets/
+    img_size: ${img_size}
+    train:
+      _target_: ${data.tasks.vaec_test4.dataset.target}
+      dataset_type: analogy_train.hy
+      data_path: ${data.tasks.vaec_test4.dataset.data_path}
+      # TODO: allow multiple or treat as separate datasets?
+      # - analogy_scale_train.hy
+      img_size: ${data.tasks.vaec_test4.dataset.img_size}
+    val:
+      _target_: ${data.tasks.vaec_test4.dataset.target}
+      dataset_type: analogy_test1.hy
+        # TODO: allow multiple or treat as separate datasets?
+        # TODO: split into val and test?
+        # - analogy_scale_test1.hy
+      data_path: ${data.tasks.vaec_test4.dataset.data_path}
+      img_size: ${data.tasks.vaec_test4.dataset.img_size}
     test:
-      _target_: ${data.tasks.vaec_test4_vit_2.dataset.target}
+      _target_: ${data.tasks.vaec_test4.dataset.target}
       dataset_type: analogy_test4.hy
         # - analogy_test1.hy
         # - analogy_test2.hy
         # - analogy_test3.hy
         # - analogy_test4.hy
         # - analogy_test5.hy
+        # TODO: allow multiple or treat as separate datasets?
+        # TODO: split into val and test?
         # - analogy_scale_test1.hy
-      data_path: ${data.tasks.vaec_test4_vit_2.dataset.data_path}
+      data_path: ${data.tasks.vaec_test4.dataset.data_path}
+      img_size: ${data.tasks.vaec_test4.dataset.img_size}
   target_loss_ratio: ${target_loss_ratio}

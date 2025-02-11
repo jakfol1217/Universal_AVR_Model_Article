@@ -1,8 +1,10 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from .vit import ViT
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
+
 
 class RelationalModule(pl.LightningModule):
     def __init__(self,
@@ -65,18 +67,18 @@ class RelationalModule(pl.LightningModule):
             if self.context_norm:
                 context_choice = self.apply_context_norm(context_choice)
             
-            if torch.any(context_choice.isinf() or context_choice.isnan()):
-                print("after normalization")
-                print(context_choice)
+#            if torch.any(context_choice.isinf()) or torch.any(context_choice.isnan()):
+#                print("after normalization")
+#                print(context_choice)
 
             keys = self.k_trans(context_choice) # creating keys
             queries = self.q_trans(context_choice) # creating queries
-            if torch.any(keys.isinf() or keys.isnan()):
-                print("keys")
-                print(keys)
-            if torch.any(queries.isinf() or queries.isnan()):
-                print("queries")
-                print(queries)
+#            if torch.any(keys.isinf()) or torch.any(keys.isnan()):
+#                print("keys")
+#                print(keys)
+#            if torch.any(queries.isinf()) or torch.any(queries.isnan()):
+#                print("queries")
+#                print(queries)
             rel_matrix_1, rel_matrix_2 = self.create_relational(keys, queries)
 
             rel_matrix = torch.cat([rel_matrix_1.unsqueeze(1), rel_matrix_2.unsqueeze(1)], dim=1)
@@ -84,6 +86,8 @@ class RelationalModule(pl.LightningModule):
             relational_matrices.append(rel_matrix.unsqueeze(1))
 
         return torch.cat(relational_matrices, dim=1)
+
+
 
 
 # todo: potentially other module for abstract shapes? utilizing slots etc
@@ -185,6 +189,7 @@ def relationalModelConstructor(use_answers_only,
                                     hierarchical)
 
 
+
 class RelationalModuleSymAsym(pl.LightningModule):
     def __init__(self,
                  cfg,
@@ -215,7 +220,7 @@ class RelationalModuleSymAsym(pl.LightningModule):
                                         hierarchical=hierarchical)
         
 
-    def forward(self, context: torch.Tensor, answers: torch.Tensor) -> torch.Tensor:
+    def forward(self, context: torch.Tensor, answers: torch.Tensor, agg=None) -> torch.Tensor:
 
         rel_matrix = self.rel_sym(context, answers)
 
@@ -224,6 +229,10 @@ class RelationalModuleSymAsym(pl.LightningModule):
     
         if self.aggregator is not None:
             aggregator = self.aggregator.softmax(-1)
+            if agg is not None:
+                aggregator = agg.softmax(-1)
+#            print("aggregator")
+#            print(aggregator)
             rel_mat_comb = torch.cat([rel_matrix.unsqueeze(2), rel_matrix_asym.unsqueeze(2)], dim=2)
             rel_mat_comb = torch.einsum('btdch,m->btch', rel_mat_comb, aggregator)
 
@@ -231,6 +240,9 @@ class RelationalModuleSymAsym(pl.LightningModule):
             rel_mat_comb = torch.cat([rel_matrix, rel_matrix_asym], dim=2)
 
         return rel_mat_comb
+
+
+
 
 
 class RelationalScoringModule(pl.LightningModule):
@@ -245,16 +257,16 @@ class RelationalScoringModule(pl.LightningModule):
                  ):
         super(RelationalScoringModule, self).__init__()
 
-     #   self.scoring_mlp = nn.Sequential(
-     #           nn.Linear(in_dim, hidden_dim),
-     ##           nn.ReLU(),
-     #           nn.Linear(hidden_dim, 1)
-     #   )
+#        self.scoring_mlp = nn.Sequential(
+#                nn.Linear(in_dim, hidden_dim),
+#                nn.ReLU(),
+#                nn.Linear(hidden_dim, 1)
+#        )
         try:
             len(hidden_dim)
         except:
             hidden_dim = [hidden_dim]
-            
+
         self.scoring_mlp = LinearModule(
                     cfg=None,
                     in_dim=in_dim,
@@ -277,18 +289,7 @@ class RelationalScoringModule(pl.LightningModule):
             self.transformer=instantiate(transformer, cfg=None)
         else:
             self.transformer=transformer
-    #    self.transformer = ViT(
-    #        cfg= None,
-    #  dim= 13, # hidden dimension size
-    #  depth= 4 ,# transformer number of layers
-    #  heads= 2 ,# transformer number of heads
-    #  mlp_dim= 128 ,# transformer mlp dimension
-    #  pool= cls,
-    #  dim_head= 32,
-    #  dropout= 0.1,
-    #  emb_dropout= 0.0,
-    #  save_hyperparameters= False
-    #    )
+
 
     def forward(self, rel_matrix: torch.Tensor) -> torch.Tensor:
         answer_scores = []
@@ -342,7 +343,8 @@ class SemiDummyRelationalClassifier(pl.LightningModule):
                 return torch.Tensor(0)
             else:
                 return torch.Tensor(1)
-            
+
+
 
 class LinearModule(pl.LightningModule):
     def __init__(
@@ -364,3 +366,5 @@ class LinearModule(pl.LightningModule):
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.mlp(input)
+
+

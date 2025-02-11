@@ -94,12 +94,15 @@ class CombinedModel(ScoringModel):
 
 
         self.separate_aggregators = nn.ParameterList([nn.Parameter(data=torch.rand(2, requires_grad=True)) 
-                                                          for _ in range(max(len(self.task_names), self.dataloader_idx+1))])
+                                                          for _ in range(2)])
         
         
         
         self.use_separate_aggregators = use_separate_aggregators
+        print(self.use_separate_aggregators)
 
+
+        cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
 
         # loading modules from checkpoints
         self.relational_module = self.load_module_from_checkpoint(
@@ -191,7 +194,6 @@ class CombinedModel(ScoringModel):
             rel_matrix = self.relational_module(given_panels, answer_panels, self.separate_aggregators[idx])
         else:
             rel_matrix = self.relational_module(given_panels, answer_panels)
-
             
         if not isAbstract:
             scores = self.relational_scoring_module_1(rel_matrix)

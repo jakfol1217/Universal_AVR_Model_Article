@@ -336,7 +336,6 @@ class SVRTdataset_h5py(Dataset):
 
         return img, target
 
-
 class SVRTdataset_h5py_vit(SVRTdataset_h5py):
     def __init__(
         self,

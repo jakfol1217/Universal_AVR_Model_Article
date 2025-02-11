@@ -4,15 +4,14 @@ context_norm: true
 in_dim: 1024
 
 relational_module:
-  _target_: model.models.relational_module.RelationalModuleSymAsym
+  _target_: model.models.relational_module.RelationalModule
   object_size: 1024
-  rel_activation_func: 'none'
-  aggregate: true
+  asymetrical: true
+  rel_activation_func: 'softmax'
   context_norm: true
   hierarchical: false
   ckpt_path: null
   freeze_module: false
-  loading_name: 'relational_module'
 
 
 relational_scoring_module_1:
@@ -42,5 +41,16 @@ save_hyperparameters: true
 
 limit_to_groups: false
 
-slot_model: null
+slot_model:
+  _target_: model.models.STSNv3.SlotAttentionAutoEncoder
+  resolution:
+    - ${img_size}
+    - ${img_size}
+  num_slots: 20
+  hid_dim: 64
+  num_iterations: 3
+  ckpt_path: null
+  save_hyperparameters: false
+  save_slots: false
+  freeze_slot_model: true
 

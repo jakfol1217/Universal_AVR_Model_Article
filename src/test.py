@@ -46,7 +46,7 @@ def main(cfg: DictConfig) -> None:
     torch.set_float32_matmul_precision(cfg.torch.matmul_precision)  # 'medium' | 'high'
     # https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
 
-    keys = [os.environ["JF_WANDB_API_KEY"], os.environ["AK_WANDB_API_KEY"]]
+    keys = [os.environ["JF_WANDB_API_KEY"]]
     keys_cycle = cycle(keys)
 
     pl.seed_everything(cfg.seed)
@@ -77,7 +77,6 @@ def main(cfg: DictConfig) -> None:
     run_config = run.config
     run_config.update(cfg)
     run_config = DictConfig(run_config)
-
     data_module = instantiate(run_config.data.datamodule, run_config)
 
     module_kwargs = {}
@@ -116,11 +115,6 @@ def main(cfg: DictConfig) -> None:
         cfg.checkpoint_path, cfg=run_config, **module_kwargs, **additional_kwargs, _recursive_=False,
         dataloader_idx=cfg.get("dataloader_idx"), new_real_idxes=cfg.get("new_real_idxes")
     )
-
-
-
-
-
 
     print(module)
 
