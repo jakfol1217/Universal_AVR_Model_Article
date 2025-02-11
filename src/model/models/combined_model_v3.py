@@ -99,7 +99,6 @@ class CombinedModel(ScoringModel):
         
         
         self.use_separate_aggregators = use_separate_aggregators
-        print(self.use_separate_aggregators)
 
 
         cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)

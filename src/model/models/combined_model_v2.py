@@ -172,7 +172,6 @@ class CombinedModel(ScoringModel):
     def partial_freeze_module(self, module, layers):
         for param in module.parameters():
             param.requires_grad = False
-        print(module.named_parameters())
         for layer in layers:
             for name, param in module.named_parameters():
                 layer_name = f"transformer.layers.{layer}"
