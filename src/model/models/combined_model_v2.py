@@ -21,17 +21,13 @@ class CombinedModel(ScoringModel):
             self,
             cfg: DictConfig,
             context_norm: bool,
-            slot_model: pl.LightningModule,
-            #slot_model_v3: pl.LightningModule,
             relational_module_real: pl.LightningModule | None = None,
             relational_module_abstract: pl.LightningModule | None = None,
             relational_scoring_module: pl.LightningModule | None = None,
             real_idxes: list = [0],
             additional_metrics: dict = {},
             save_hyperparameters: bool = True,
-            freeze_slot_model: bool = True,
             limit_to_groups: bool = False,
-            auxiliary_loss_ratio: float = 0.0,
             in_dim: int = 1024,
             **kwargs,
     ):
@@ -40,13 +36,10 @@ class CombinedModel(ScoringModel):
             context_norm=context_norm, 
             num_correct=1, 
             in_dim=in_dim, 
-            slot_model=slot_model,
             transformer=None, 
             pos_emb=None, 
             additional_metrics=additional_metrics,
-            save_hyperparameters=save_hyperparameters, 
-            freeze_slot_model=freeze_slot_model,
-            auxiliary_loss_ratio=auxiliary_loss_ratio)
+            save_hyperparameters=save_hyperparameters)
         
         # loading relational scoring module
         self.relational_scoring_module = relational_scoring_module

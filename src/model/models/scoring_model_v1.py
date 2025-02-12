@@ -25,14 +25,11 @@ class ScoringModel(AVRModule):
         context_norm: bool,
         num_correct: int,  # number of correct answers, raven - 1, bongard - 2
         in_dim,
-        slot_model: pl.LightningModule,
         transformer: pl.LightningModule,
         pos_emb: pl.LightningModule | None = None,
         disc_pos_emb: pl.LightningModule | None = None,
         additional_metrics: dict = {},
         save_hyperparameters=True,
-        freeze_slot_model=True,
-        auxiliary_loss_ratio: float = 0.0,
         increment_dataloader_idx: int = 0,
         **kwargs,
     ):
@@ -57,28 +54,7 @@ class ScoringModel(AVRModule):
         else:
             self.contextnorm = False
 
-        self.slot_model = slot_model  
-        if self.slot_model is not None:
-            if ( # loading slot model weights from checkpoint
-                slot_ckpt_path := cfg.model.slot_model.ckpt_path
-            ) is not None and cfg.checkpoint_path is None:
-                cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-                model_cfg = {
-                    k: v
-                    for k, v in cfg_dict["model"]["slot_model"].items()
-                    if k != "_target_"
-                }
-                self.slot_model = slot_model.__class__.load_from_checkpoint(
-                    slot_ckpt_path, cfg=cfg, **model_cfg
-                )
-        self.freeze_slot_model = freeze_slot_model
-        self.auxiliary_loss_ratio = auxiliary_loss_ratio # auxiliary loss ratio for image reconstruction with slots
 
-        if self.slot_model is not None:   
-            if self.freeze_slot_model:
-                self.slot_model.freeze()
-            else:
-                self.slot_model.unfreeze()
 
         multi_transformers = [ # multi transformer models handling
             int(_it.removeprefix("transformer_"))
@@ -161,123 +137,14 @@ class ScoringModel(AVRModule):
         return z_seq
 
     def forward(self, given_panels, answer_panels, idx=0):
-        # computing scores with multiple possible transformer models
-        __pos_emb = self.pos_emb[idx]
-        __transformer = self.transformer[idx]
-        __num_correct = (
-            self.num_correct if idx == 0 else self.__dict__[f"num_correct_{idx}"]
-        )
-        __disc_pos_emb = self.disc_pos_emb[idx]
-
-        scores = []
-        pos_emb_score = (
-            __pos_emb(given_panels) if __pos_emb is not None and not self.use_disc_pos_emb else torch.tensor(0.0)
-        )
-
-        disc_pos_embed = __disc_pos_emb() if self.use_disc_pos_emb else torch.rand(0)
-        if self.use_disc_pos_emb:
-            disc_pos_embed = disc_pos_embed.repeat(given_panels.shape[0], 1, 1)
-
-        # Loop through all choices and compute scores
-        for d in permutations(range(answer_panels.shape[1]), __num_correct):
-
-            # print(AB,C_choices[:,d,:],AB.shape,C_choices[:,d,:].shape)
-            # x_seq = torch.cat([given_panels_posencoded_seq,torch.cat((answer_panels[:,d],self.row_fc(third).unsqueeze(1).repeat((1,answer_panels.shape[2],1)), self.column_fc(third).unsqueeze(1).repeat((1,answer_panels.shape[2],1))),dim=2).unsqueeze(1)],dim=1)
-            # print(given_panels.shape)
-            # print(answer_panels[:, d].shape)
-            x_seq = torch.cat([given_panels, answer_panels[:, d]], dim=1)
-            # print("seq min and max>>",torch.min(x_seq),torch.max(x_seq))
-            # x_seq = torch.cat([AB,C_choices[:,d,:].unsqueeze(1)],dim=1)
-            x_seq = torch.flatten(x_seq, start_dim=1, end_dim=2)
-            if self.contextnorm:
-
-                x_seq = self.apply_context_norm(x_seq)
-
-            if self.use_disc_pos_emb:
-                x_seq = torch.cat([x_seq, disc_pos_embed], dim=-1)
-            else:
-                x_seq = x_seq + pos_emb_score  
-
-            # x_seq = torch.cat((x_seq,all_posemb_concat_flatten),dim=2)
-            score = __transformer(x_seq)
-            scores.append(score)
-        scores = torch.cat(scores, dim=1)
-        return scores
+        pass
 
     # TODO: Separate optimizers for different modules
     def configure_optimizers(self):
         return instantiate(self.cfg.optimizer, params=self.parameters())
 
     def _step(self, step_name, batch, batch_idx, dataloader_idx=0):
-        img, target = batch
-        recon_combined_seq = []
-        recons_seq = []
-        masks_seq = []
-        slots_seq = []
-        for idx in range(img.shape[1]): # creating slots
-            recon_combined, recons, masks, slots, attn = self.slot_model(img[:, idx])
-            recons_seq.append(recons)
-            recon_combined_seq.append(recon_combined)
-            masks_seq.append(masks)
-            slots_seq.append(slots)
-            del recon_combined, recons, masks, slots, attn
-        pred_img = torch.stack(recon_combined_seq, dim=1).contiguous()
-        if pred_img.shape[2] != img.shape[2]:
-            pred_img = pred_img.repeat(1, 1, 3, 1, 1)
-        slot_model_loss = self.slot_model.loss(pred_img, img)
-
-        context_panels_cnt = self.cfg.data.tasks[ # number of task context panels
-            self.task_names[dataloader_idx]
-        ].num_context_panels
-
-        given_panels = torch.stack(slots_seq, dim=1)[:, :context_panels_cnt] # context panels
-        answer_panels = torch.stack(slots_seq, dim=1)[:, context_panels_cnt:] # answer panels
-
-        scores = self(given_panels, answer_panels, idx=dataloader_idx + self.increment_dataloader_idx)
-        # print("scores and target>>",scores,target)
-        pred = scores.argmax(1)
-        # print(scores)
-        # print(scores.shape) # batch x num_choices
-        # print(f"Prediction: {pred}, Target: {target}")
-        ce_loss = self.loss(scores, target) # cross entropy loss for slot image reconstruction
-
-        current_metrics = self.additional_metrics[dataloader_idx + self.increment_dataloader_idx] # computing and reporting metrics
-        for metric_nm, metric_func in current_metrics.items():
-            value = metric_func(pred, target)
-            self.log(
-                f"{step_name}/{self.task_names[dataloader_idx]}/{metric_nm}",
-                value,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                add_dataloader_idx=False,
-            )
-        if self.auxiliary_loss_ratio > 0:
-            self.log(
-                f"{step_name}/{self.task_names[dataloader_idx]}/mse_loss",
-                slot_model_loss,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                add_dataloader_idx=False,
-            )
-            self.log(
-                f"{step_name}/{self.task_names[dataloader_idx]}/cross_entropy_loss",
-                ce_loss,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                add_dataloader_idx=False,
-            )
-        # acc = torch.eq(pred,target).float().mean().item() * 100.0
-
-        # print("mse loss>>>",mse_criterion(torch.stack(recon_combined_seq,dim=1).squeeze(4), img))
-        # print("ce loss>>",ce_criterion(scores,target))
-        # print("recon combined seq shape>>",torch.stack(recon_combined_seq,dim=1).shape)
-        # loss = 1000*mse_criterion(torch.stack(recon_combined_seq,dim=1), img) + ce_criterion(scores,target)
-        # loss = ce_criterion(scores,target)
-        loss = ce_loss + self.auxiliary_loss_ratio * slot_model_loss
-        return loss
+        pass
 
     def training_step(self, batch, batch_idx, dataloader_idx=0):
         loss = self.module_step("train", batch, batch_idx, dataloader_idx)

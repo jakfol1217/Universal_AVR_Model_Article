@@ -108,86 +108,6 @@ class RelationalModule(pl.LightningModule):
 
 
 
-class RelationalModuleAnswersOnly(RelationalModule):
-    # creating relational matrices with realtions between answers and context (excluding relations between context images)
-    def __init__(self,
-                 cfg,
-                 object_size: int,
-                 asymetrical: bool,
-                 rel_activation_func: str = "softmax",
-                 context_norm: bool = True,
-                 hierarchical: bool = False,
-                 *args,
-                 **kwargs
-                 ):
-        super(RelationalModuleAnswersOnly, self).__init__(object_size,
-                                                          asymetrical,
-                                                          rel_activation_func,
-                                                          context_norm,
-                                                          hierarchical)
-
-        self.asymetrical = asymetrical
-
-
-    def forward(self, context: torch.Tensor, answers: torch.Tensor) -> torch.Tensor:
-
-        relational_matrices = []
-        for ans_i in range(answers.shape[1]):
-            context_choice = torch.cat([context, answers[:, ans_i, :].unsqueeze(1)], dim=1)
-            if self.context_norm:
-                context_choice = self.apply_context_norm(context_choice)
-
-            keys = self.k_trans(context_choice)
-
-            queries = self.q_trans(context_choice)
-
-            rel_matrix_1, rel_matrix_2 = self.create_relational(keys[:,:-1], queries[:,:-1], keys[:,-1].unsqueeze(1), queries[:,-1].unsqueeze(1))
-            if not self.asymetrical:
-                rel_matrix_1 = rel_matrix_1[:, 0].unsqueeze(1)
-                rel_matrix_2 = rel_matrix_2[:, 0].unsqueeze(1)
-
-            rel_matrix = torch.cat([rel_matrix_1.unsqueeze(1), rel_matrix_2.unsqueeze(1)], dim=1)
-            rel_matrix = torch.einsum('btch,m->bch', rel_matrix, self.hierarchical_aggregation)
-            relational_matrices.append(rel_matrix.unsqueeze(1))
-
-        return torch.cat(relational_matrices, dim=1)
-
-
-    def relational_bottleneck(self, context_keyes, context_queries, answers_keys, answers_queries): # creating relational matrices of 1st degree only
-
-        rel_answers_queries = torch.matmul(context_keyes, answers_queries.transpose(1,2)).squeeze()
-        rel_answers_keys = torch.matmul(context_queries, answers_keys.transpose(1,2)).squeeze()
-        rel_answers = torch.cat([rel_answers_queries.unsqueeze(1), rel_answers_keys.unsqueeze(1)], dim=1)
-        return self.rel_activation_func(rel_answers), torch.zeros(*rel_answers.shape, device=rel_answers.device)
-    
-
-    def relational_bottleneck_hierarchical(self, context_keyes, context_queries, answers_keys, answers_queries): # creating relational matrices of 1st and 2nd degrees
-
-        rel_answers_1, _ = self.relational_bottleneck(context_keyes, context_queries, answers_keys, answers_queries)  # use activation on previous if hierarchical?
-        rel_context_1 = self.rel_activation_func(torch.matmul(context_keyes, context_queries.transpose(1,2)))
-        rel_answers_2 = torch.matmul(rel_context_1, rel_answers_1.transpose(1,2))
-        return rel_answers_1, self.rel_activation_func(rel_answers_2.reshape(*rel_answers_1.shape))
-
-
-def relationalModelConstructor(use_answers_only,
-                 object_size: int,
-                 asymetrical: bool,
-                 rel_activation_func: str = "softmax",
-                 context_norm: bool = True,
-                 hierarchical: bool = False)-> RelationalModule:
-    if use_answers_only:
-        return RelationalModuleAnswersOnly(object_size,
-                                            asymetrical,
-                                            rel_activation_func,
-                                            context_norm,
-                                            hierarchical)
-    else:
-        return RelationalModule(object_size,
-                                    asymetrical,
-                                    rel_activation_func,
-                                    context_norm,
-                                    hierarchical)
-
 
 
 class RelationalModuleSymAsym(pl.LightningModule):
@@ -197,7 +117,6 @@ class RelationalModuleSymAsym(pl.LightningModule):
                  rel_activation_func: str = "none",
                  aggregate: bool = True,
                  context_norm: bool = False,
-                 hierarchical: bool = False,
                  **kwargs
                  ):
         super(RelationalModuleSymAsym, self).__init__()
@@ -211,13 +130,13 @@ class RelationalModuleSymAsym(pl.LightningModule):
                                         asymetrical=False,
                                         rel_activation_func=rel_activation_func,
                                         context_norm=context_norm,
-                                        hierarchical=hierarchical)
+                                        hierarchical=False)
         self.rel_asym = RelationalModule(cfg=cfg,
                                         object_size=object_size,
                                         asymetrical=True,
                                         rel_activation_func=rel_activation_func,
                                         context_norm=context_norm,
-                                        hierarchical=hierarchical)
+                                        hierarchical=False)
         
 
     def forward(self, context: torch.Tensor, answers: torch.Tensor, agg=None) -> torch.Tensor:
@@ -231,8 +150,6 @@ class RelationalModuleSymAsym(pl.LightningModule):
             aggregator = self.aggregator.softmax(-1)
             if agg is not None:
                 aggregator = agg.softmax(-1)
-#            print("aggregator")
-#            print(aggregator)
             rel_mat_comb = torch.cat([rel_matrix.unsqueeze(2), rel_matrix_asym.unsqueeze(2)], dim=2)
             rel_mat_comb = torch.einsum('btdch,m->btch', rel_mat_comb, aggregator)
 
@@ -306,43 +223,6 @@ class RelationalScoringModule(pl.LightningModule):
         answer_scores = torch.cat(answer_scores, dim=1)
         return answer_scores
 
-
-class SemiDummyRelationalClassifier(pl.LightningModule):
-    # "dummy" classifier (tested on bongard problems) -- we assign answers to groups that are on average more similar
-    def __init__(
-        self
-    ):
-        super().__init__()
-
-
-    def forward(
-            self, 
-            panels: torch.Tensor
-    ):
-        print(panels.shape)
-        rel_matrix = torch.matmul(panels, panels.transpose(0,1))
-        ans_1_group_1_relation = rel_matrix[6][0:6].sum()
-        ans_1_group_2_relation = rel_matrix[6][7:-1].sum()
-        ans_2_group_1_relation = rel_matrix[-1][0:6].sum()
-        ans_2_group_2_relation = rel_matrix[-1][7:-1].sum()
-
-        if ans_1_group_1_relation >= ans_1_group_2_relation:
-            ans_1_assignment = 0
-        else:
-            ans_1_assignment = 1
-
-        if ans_2_group_1_relation >= ans_2_group_2_relation:
-            ans_2_assignment = 0
-        else:
-            ans_2_assignment = 1
-
-        if ans_1_assignment != ans_2_assignment:
-            return torch.Tensor(ans_1_assignment)
-        else:
-            if ans_1_group_1_relation >= ans_2_group_1_relation:
-                return torch.Tensor(0)
-            else:
-                return torch.Tensor(1)
 
 
 
