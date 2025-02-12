@@ -1,0 +1,40 @@
+# @package _global_
+defaults:
+  - override /data/tasks: [bongard_hoi_vit_2, vaec_vit_2]
+  - override /model: combined_model_v3
+  - override /data/datamodule: multi_module
+
+img_size: 256
+max_epochs: 500
+batch_size: 16
+lr: 0.0001
+every_n_epochs: 1
+every_n_train_steps: null
+early_stopping_patience: 20
+
+model:
+  real_idxes: [0]
+  relational_module:
+    _target_: model.models.relational_module.RelationalModuleSymAsym
+    object_size: 1024
+    rel_activation_func: 'none'
+    aggregate: true
+    context_norm: true
+    hierarchical: false
+    ckpt_path: null
+    freeze_module: false
+    loading_name: 'relational_module'
+  relational_scoring_module_1:
+    in_dim: 169 
+  relational_scoring_module_2:
+    in_dim: 16
+  task_metric_0:
+    accuracy_bongard_hoi:
+      _target_: torchmetrics.classification.BinaryAccuracy
+      threshold: 0.5
+  task_metric_1:
+    accuracy_vaec:
+      _target_: torchmetrics.classification.MulticlassAccuracy
+      num_classes: 4
+      average: macro
+
