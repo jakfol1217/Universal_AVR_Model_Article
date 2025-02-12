@@ -7,7 +7,7 @@ relational_module_real:
   _target_: model.models.relational_module.RelationalModule
   object_size: 1024
   asymetrical: true
-  rel_activation_func: 'softmax'
+  rel_activation_func: 'none'
   context_norm: true
   hierarchical: false
   ckpt_path: null
@@ -15,16 +15,7 @@ relational_module_real:
   loading_name: 'relational_module_real'
 
 
-relational_module_abstract:
-  _target_: model.models.relational_module.RelationalModule
-  object_size: 1024
-  asymetrical: true
-  rel_activation_func: 'softmax'
-  context_norm: true
-  hierarchical: false
-  ckpt_path: null
-  freeze_module: false
-  loading_name: 'relational_module_abstract'
+relational_module_abstract: null
 
 relational_scoring_module:
   _target_: model.models.relational_module.RelationalScoringModule

@@ -245,23 +245,6 @@ class CombinedModel(ScoringModel):
                 logger=True,
                 add_dataloader_idx=False,
             )
-        if self.auxiliary_loss_ratio > 0:
-            self.log(
-                f"{step_name}/{self.task_names[dataloader_idx]}/mse_loss",
-                slot_model_loss,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                add_dataloader_idx=False,
-            )
-            self.log(
-                f"{step_name}/{self.task_names[dataloader_idx]}/cross_entropy_loss",
-                ce_loss,
-                on_epoch=True,
-                prog_bar=False,
-                logger=True,
-                add_dataloader_idx=False,
-            )
 
         loss = ce_loss
         return loss
