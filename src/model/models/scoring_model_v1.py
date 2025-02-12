@@ -58,24 +58,27 @@ class ScoringModel(AVRModule):
             self.contextnorm = False
 
         self.slot_model = slot_model  
-        if ( # loading slot model weights from checkpoint
-            slot_ckpt_path := cfg.model.slot_model.ckpt_path
-        ) is not None and cfg.checkpoint_path is None:
-            cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-            model_cfg = {
-                k: v
-                for k, v in cfg_dict["model"]["slot_model"].items()
-                if k != "_target_"
-            }
-            self.slot_model = slot_model.__class__.load_from_checkpoint(
-                slot_ckpt_path, cfg=cfg, **model_cfg
-            )
+        if self.slot_model is not None:
+            if ( # loading slot model weights from checkpoint
+                slot_ckpt_path := cfg.model.slot_model.ckpt_path
+            ) is not None and cfg.checkpoint_path is None:
+                cfg_dict = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+                model_cfg = {
+                    k: v
+                    for k, v in cfg_dict["model"]["slot_model"].items()
+                    if k != "_target_"
+                }
+                self.slot_model = slot_model.__class__.load_from_checkpoint(
+                    slot_ckpt_path, cfg=cfg, **model_cfg
+                )
         self.freeze_slot_model = freeze_slot_model
         self.auxiliary_loss_ratio = auxiliary_loss_ratio # auxiliary loss ratio for image reconstruction with slots
-        if self.freeze_slot_model:
-            self.slot_model.freeze()
-        else:
-            self.slot_model.unfreeze()
+
+        if self.slot_model is not None:   
+            if self.freeze_slot_model:
+                self.slot_model.freeze()
+            else:
+                self.slot_model.unfreeze()
 
         multi_transformers = [ # multi transformer models handling
             int(_it.removeprefix("transformer_"))

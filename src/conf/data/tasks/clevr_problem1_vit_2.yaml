@@ -1,0 +1,24 @@
+defaults:
+  - clevr_problem1_vit_2/dataloader: ../../../../dataloader/default
+  - clevr_problem1_vit_2/optimizer: ../../../../optimizer/adam
+
+clevr_problem1_vit_2:
+  num_context_panels: 8
+  context_groups: [[0,1,2,3,4,5,6,7]]
+  answer_groups: [0, 1, 2, 3, 4, 5, 6, 7]
+  dataset:
+    target: model.avr_datasets.EmbeddingH5PYDataset
+    data_path: ${data.root}/vit_large_patch32_384/clevr/
+    train:
+      _target_: ${data.tasks.clevr_problem1_vit_2.dataset.target}
+      dataset_type: train_problem1
+      data_path: ${data.tasks.clevr_problem1_vit_2.dataset.data_path}
+    val:
+      _target_: ${data.tasks.clevr_problem1_vit_2.dataset.target}
+      dataset_type: val_problem1
+      data_path: ${data.tasks.clevr_problem1_vit_2.dataset.data_path}
+    test:
+      _target_: ${data.tasks.clevr_problem1_vit_2.dataset.target}
+      dataset_type: test_problem1
+      data_path: ${data.tasks.clevr_problem1_vit_2.dataset.data_path}
+  target_loss_ratio: ${target_loss_ratio}
