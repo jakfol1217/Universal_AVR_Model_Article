@@ -48,12 +48,6 @@ test_vasr () {
 }
 
 
-test_iraven () {
-    test_prepare $1 $2 $3
-    
-    test_run iraven_vit_2
-}
-
 
 test_clevr () {
     test_prepare $1 $2 $3
@@ -79,6 +73,12 @@ test_clevr_problem3 () {
     test_run clevr_problem3_vit_2
 }
 
+
+test_iraven () {
+    test_prepare $1 $2 $3
+
+    test_run iraven_center_single_vit_2 iraven_in_center_single_out_center_single_vit_2 iraven_up_center_single_down_center_single_vit_2 iraven_distribute_four_vit_2 iraven_in_distribute_four_out_center_single_vit_2 iraven_distribute_nine_vit_2 iraven_left_center_single_right_center_single_vit_2 
+}
 
 test_iraven_center_single () {
     test_prepare $1 $2 $3
