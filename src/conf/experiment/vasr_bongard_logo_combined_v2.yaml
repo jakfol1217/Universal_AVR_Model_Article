@@ -14,6 +14,26 @@ early_stopping_patience: 20
 
 model:
   real_idxes: [0]
+  relational_module_abstract:
+    _target_: model.models.relational_module.RelationalModuleSymAsym
+    object_size: 1024
+    rel_activation_func: 'none'
+    aggregate: true
+    context_norm: true
+    hierarchical: false
+    ckpt_path: null
+    freeze_module: false
+    loading_name: 'relational_module_abstract'
+  relational_module_real:
+    _target_: model.models.relational_module.RelationalModuleSymAsym
+    object_size: 1024
+    rel_activation_func: 'none'
+    aggregate: true
+    context_norm: true
+    hierarchical: false
+    ckpt_path: null
+    freeze_module: false
+    loading_name: 'relational_module_real'
   task_metric_0:
     accuracy_vasr:
       _target_: torchmetrics.classification.MulticlassAccuracy

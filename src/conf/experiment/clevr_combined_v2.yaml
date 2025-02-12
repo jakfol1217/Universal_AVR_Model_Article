@@ -18,14 +18,14 @@ model:
     _target_: model.models.relational_module.RelationalModuleSymAsym
     object_size: 1024
     rel_activation_func: 'none'
-    aggregate: false
+    aggregate: true
     context_norm: true
     hierarchical: false
     ckpt_path: null
     freeze_module: false
     loading_name: 'relational_module_abstract'
   relational_scoring_module:
-    in_dim: 162
+    in_dim: 81
   task_metric_0:
     accuracy_clevr:
       _target_: torchmetrics.classification.MulticlassAccuracy
