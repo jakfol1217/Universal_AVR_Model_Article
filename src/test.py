@@ -46,7 +46,7 @@ def main(cfg: DictConfig) -> None:
     torch.set_float32_matmul_precision(cfg.torch.matmul_precision)  # 'medium' | 'high'
     # https://pytorch.org/docs/stable/generated/torch.set_float32_matmul_precision.html#torch.set_float32_matmul_precision
 
-    keys = [os.environ["JF_WANDB_API_KEY"]]
+    keys = [os.environ["JF_WANDB_API_KEY"], os.environ["AK_WANDB_API_KEY"]]
     keys_cycle = cycle(keys)
 
     pl.seed_everything(cfg.seed)
